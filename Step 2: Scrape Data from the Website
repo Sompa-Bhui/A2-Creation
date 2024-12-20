@@ -1,0 +1,95 @@
+2.1: Load the Web Page
+We'll extract data from https://www.noon.com/uae-en/sports-and-outdoors/exercise-and-fitness/yoga-16328/ using requests and BeautifulSoup.
+
+2.2: Handle Pagination
+The goal is to scrape at least 200 products by navigating multiple pages.
+
+2.3: Incorporate Proxies
+We'll use a random proxy from a list for each request.
+
+2.4: Extract Relevant Details
+From each product card, we’ll extract:
+
+Name
+Price
+Brand
+Seller
+Product URL
+# Code for Web Scraping
+
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import random
+import time
+from fake_useragent import UserAgent
+
+# Define a list of proxies (Replace these with actual working proxies)
+proxies_list = [
+    "http://proxy1:port",
+    "http://proxy2:port",
+    "http://proxy3:port"
+]
+
+def get_random_proxy():
+    """Return a random proxy."""
+    return {"http": random.choice(proxies_list), "https": random.choice(proxies_list)}
+
+def scrape_noon_data(base_url, max_products=200):
+    """Scrape Noon website for product data."""
+    headers = {'User-Agent': UserAgent().random}
+    products = []
+    page = 1
+
+    while len(products) < max_products:
+        # Request the webpage
+        url = f"{base_url}?page={page}"
+        print(f"Scraping page {page}...")
+        response = requests.get(url, headers=headers, proxies=get_random_proxy())
+        
+        if response.status_code != 200:
+            print(f"Failed to fetch page {page}, status code: {response.status_code}")
+            break
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Find all product cards
+        product_cards = soup.find_all('div', class_='productContainer')
+        if not product_cards:  # Stop if no products found (end of pagination)
+            break
+
+        for card in product_cards:
+            try:
+                name = card.find('div', class_='name').text.strip()
+                price = card.find('div', class_='price').text.strip().replace("AED", "").replace(",", "").strip()
+                brand = card.find('div', class_='brandName').text.strip()
+                seller = card.find('div', class_='seller').text.strip() if card.find('div', class_='seller') else 'No Seller Info'
+                product_url = "https://www.noon.com" + card.find('a')['href']
+
+                products.append({
+                    'Name': name,
+                    'Price (AED)': float(price),
+                    'Brand': brand,
+                    'Seller': seller,
+                    'URL': product_url
+                })
+
+                if len(products) >= max_products:
+                    break
+            except Exception as e:
+                print(f"Error parsing product: {e}")
+
+        page += 1
+        time.sleep(random.uniform(1, 3))  # Avoid getting blocked
+
+    return products
+
+# Scrape the data
+base_url = "https://www.noon.com/uae-en/sports-and-outdoors/exercise-and-fitness/yoga-16328/"
+data = scrape_noon_data(base_url, max_products=200)
+
+# Save the data to a CSV file
+df = pd.DataFrame(data)
+df.to_csv('noon_products.csv', index=False)
+print("Data scraped and saved to 'noon_products.csv'")
