@@ -1,0 +1,60 @@
+3.1: Load Data
+Load the data into a pandas DataFrame:
+
+import pandas as pd
+
+# Load the scraped data
+df = pd.read_csv('noon_products.csv')
+print(df.head())
+
+
+3.2: Perform Analysis
+a. Most Expensive and Cheapest Product
+
+most_expensive = df.loc[df['Price (AED)'].idxmax()]
+cheapest = df.loc[df['Price (AED)'].idxmin()]
+print("Most Expensive Product:", most_expensive)
+print("Cheapest Product:", cheapest)
+
+b. Products by Brand
+
+brand_counts = df['Brand'].value_counts()
+print("Number of Products by Each Brand:")
+print(brand_counts)
+
+c. Products by Seller
+
+seller_counts = df['Seller'].value_counts()
+print("Number of Products by Each Seller:")
+print(seller_counts)
+
+3.3: Visualize the Data
+Use matplotlib and seaborn for visualizations.
+
+Brand Distribution
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Bar chart for brands
+sns.barplot(x=brand_counts.index, y=brand_counts.values)
+plt.title('Number of Products by Brand')
+plt.xticks(rotation=90)
+plt.xlabel('Brand')
+plt.ylabel('Number of Products')
+plt.show()
+
+
+Price Distribution
+
+# Boxplot for price distribution
+sns.boxplot(data=df, x='Price (AED)')
+plt.title('Price Distribution')
+plt.show()
+
+# Histogram for price ranges
+sns.histplot(df['Price (AED)'], bins=20, kde=True)
+plt.title('Price Range Distribution')
+plt.xlabel('Price (AED)')
+plt.ylabel('Frequency')
+plt.show()
